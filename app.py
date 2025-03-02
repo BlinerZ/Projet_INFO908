@@ -48,7 +48,11 @@ app_ui = ui.page_fillable(
             ),
             ui.layout_columns(
                 ui.card(
-                    ui.input_selectize("selec_global_licence",  "Choisir les stats à afficher:", {"gd_discipline": "Grandes disciplines", "discipline": "Disciplines"}),
+                    ui.card_header(
+                        "Choisir les stats à afficher ",
+                        ui.input_selectize("selec_global_licence",  None, {"gd_discipline": "Grandes disciplines", "discipline": "Disciplines"}),
+                        full_screen=True
+                    ),
                     output_widget("country_detail_pop"), 
                     height="400px",
                     ),
