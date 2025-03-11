@@ -61,10 +61,36 @@ app_ui = ui.page_fillable(
         ),
         ui.nav_panel(
             "Etudes profils",
+           ui.nav_panel(
+            "Etudes profils",
             ui.h2(
-                "Interface graphique Projet INFO908: Taux de réussite en Licence.",
+                "Analyse des facteurs influençant la réussite universitaire",
                 style="background-color:#F0F8FF; font-weight:bold; font-size:18px; color:#1F618D; margin-top:0px;",
             ),
+            ui.layout_columns(
+                # Première ligne - Graphique seul
+                ui.card(
+                    ui.card_header("1. Impact du type de bac sur la réussite"),
+                    output_widget("reussite_par_type_bac"),
+                    height="400px",
+                ),
+                # Deuxième ligne - Deux graphiques côte à côte
+                ui.layout_columns(
+                    ui.card(
+                        ui.card_header("2. Influence mention bac sur L2"),
+                        output_widget("passage_l2_par_mention"),
+                        height="400px",
+                    ),
+                    ui.card(
+                        ui.card_header("3. Écart de réussite par genre"),
+                       output_widget("reussite_par_sexe"),
+                       height="400px",
+                   ),
+                   col_widths=[6, 6],  # 6 colonnes chacun = 50% de largeur
+               ),
+               col_widths=[12, 12],  # 12 colonnes = 100% de largeur pour chaque ligne
+           ),
+        ),
         ),
         ui.nav_panel(
             "Modèle",
@@ -152,6 +178,98 @@ def server(input, output, session):
     @render.text
     def resultat_infer_model():
         return str(infer_model.result())
+
+    @render_widget
+    def reussite_par_type_bac():
+        # Récupération des données
+        raw_data = data_getter.get_data(url="api/taux_reussite_licence/type_bac")
+        df = pd.DataFrame(raw_data)
+        
+        # Normalisation des noms de colonnes
+        df.columns = [col.replace("BAC ", "").strip().lower() for col in df.columns]
+        
+        # Transformation en format long
+        df_long = df.melt(var_name="categorie", value_name="taux")
+        
+        # Création du graphique
+        return px.bar(
+            df_long,
+            x="categorie",
+            y="taux",
+            color="categorie",
+            title="Réussite par Catégorie de Bac",
+            labels={"categorie": "Type de Bac", "taux": "Taux de Réussite (%)"}
+        )
+
+    @render_widget
+    def passage_l2_par_mention():
+        try:
+            # Récupération des données brutes
+            raw_data = data_getter.get_data(url="api/passage_l2/bac")
+            
+            # Conversion en Series pandas si nécessaire
+            if isinstance(raw_data, pd.DataFrame):
+                raw_data = raw_data.iloc[0]  # Prendre la première ligne si format DataFrame
+
+            # Transformation en format adapté
+            df = pd.DataFrame({
+                'type_bac': [k.replace("BAC ", "") for k in raw_data.index],
+                'count': raw_data.values
+            })
+
+            # Création du graphique
+            fig = px.bar(
+                df,
+                x='type_bac',
+                y='count',
+                size='count',
+                color='type_bac',
+                title="Passage en L2 par type de bac",
+                labels={'type_bac': 'Type de bac', 'count': "Nombre d'étudiants"},
+                hover_data={'count': ':.0f'}
+            )
+        
+            # Formatage supplémentaire
+            fig.update_traces(
+                marker=dict(sizemode='diameter', sizeref=0.1),
+                textposition='top center'
+            )
+            fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
+            
+            return fig
+
+        except Exception as e:
+            print(f"Erreur dans passage_l2_par_mention: {str(e)}")
+            return px.scatter(title="Données indisponibles")
+
+    @render_widget
+    def reussite_par_sexe():
+        # Récupération des données brutes
+        raw_data = data_getter.get_data(url="api/passage_l2/sexe")
+        
+        # Transformation en DataFrame
+        df = pd.DataFrame(raw_data)
+
+        # Create a DataFrame with the correct format
+        df = pd.DataFrame({
+            'sexe': ['Femme', 'Homme'],
+            'taux': [raw_data['Femme.taux_passage'][0], raw_data['Homme.taux_passage'][0]]  # Access the first element of the Series
+        })
+            
+        # Création du camembert
+        return px.pie(
+            df,
+            names='sexe',
+            values='taux',
+            hole=0.4,
+            title="Taux de passage en L2 par genre",
+            color_discrete_sequence=px.colors.qualitative.Pastel,
+            labels={'taux': 'Taux de passage (%)', 'sexe': 'Genre'}
+        ).update_traces(
+            textinfo='percent+label',
+            texttemplate='%{label}<br>%{percent:.1%}',
+            hovertemplate='<b>%{label}</b><br>Taux exact: %{value:.1f}%'
+        )
                              
     # @output.render
     # def resultat_inder_model():
