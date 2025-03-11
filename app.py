@@ -61,8 +61,6 @@ app_ui = ui.page_fillable(
         ),
         ui.nav_panel(
             "Etudes profils",
-           ui.nav_panel(
-            "Etudes profils",
             ui.h2(
                 "Analyse des facteurs influençant la réussite universitaire",
                 style="background-color:#F0F8FF; font-weight:bold; font-size:18px; color:#1F618D; margin-top:0px;",
@@ -90,7 +88,6 @@ app_ui = ui.page_fillable(
                ),
                col_widths=[12, 12],  # 12 colonnes = 100% de largeur pour chaque ligne
            ),
-        ),
         ),
         ui.nav_panel(
             "Modèle",
