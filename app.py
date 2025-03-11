@@ -219,18 +219,12 @@ def server(input, output, session):
                 df,
                 x='type_bac',
                 y='count',
-                size='count',
                 color='type_bac',
                 title="Passage en L2 par type de bac",
                 labels={'type_bac': 'Type de bac', 'count': "Nombre d'étudiants"},
                 hover_data={'count': ':.0f'}
             )
-        
-            # Formatage supplémentaire
-            fig.update_traces(
-                marker=dict(sizemode='diameter', sizeref=0.1),
-                textposition='top center'
-            )
+
             fig.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
             
             return fig
